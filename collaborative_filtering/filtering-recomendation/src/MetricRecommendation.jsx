@@ -23,38 +23,36 @@ const MetricRecommendation = () => {
     setLoading(true);
     setError('');
     setRecommendations([]);
-    
-    // Criar o objeto features conforme o esperado pela API
-    const featureData = {
-      role: role,
-      years_exp: experience,
-      org_size: companySize,
-      use_metrics_planning: rituals.includes('Reunião de Planejamento') ? 1 :  0,
-      use_metrics_review: rituals.includes('Sprint Review') ? 1 :  0,
-      use_metrics_weekly: rituals.includes('Reunião Semanal') ? 1 :  0,
-      use_metrics_daily: rituals.includes('Reunião Diária (daily)') ? 1 :  0,
-      use_metrics_retro: rituals.includes('Retrospectiva') ? 1 :  0,
-      agile_methods_scrum: methods.includes('Scrum') ? 1 :  0,
-      agile_methods_kanban: methods.includes('Kanban') ? 1 :  0,
-      agile_methods_scrumban: methods.includes('ScrumBan') ? 1 :  0,
-      agile_methods_xp: methods.includes('XP') ? 1 :  0,
-      agile_methods_safe: methods.includes('Safe') ? 1 :  0,
-      agile_methods_lean: methods.includes('Lean') ? 1 :  0,
-      metrics_category_cronograma_e_progresso: categoriesSet.includes('Gestão de Tempo e Progresso') ? 1 :  0,
-      metrics_category_produto: categoriesSet.includes('Desempenho do Produto') ? 1 :  0,
-      metrics_category_processo: categoriesSet.includes('Eficiência dos Processos') ? 1 :  0,
-      metrics_category_tecnologia: categoriesSet.includes('Soluções Tecnológicas') ? 1 :  0,
-      metrics_category_cliente: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-      metrics_category_pessoas: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-    };
   
     try {
-      const response = await fetch('http://localhost:5000/recommend', {
+      const response = await fetch('http://localhost:5000/recommend_metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ features: featureData }),
+        body: JSON.stringify({
+          role: role,
+          years_exp: experience,
+          org_size: companySize,
+          use_metrics_planning: rituals.includes('Reunião de Planejamento') ? 1 :  0,
+          use_metrics_review: rituals.includes('Sprint Review') ? 1 :  0,
+          use_metrics_weekly: rituals.includes('Reunião Semanal') ? 1 :  0,
+          use_metrics_daily: rituals.includes('Reunião Diária (daily)') ? 1 :  0,
+          use_metrics_retro: rituals.includes('Retrospectiva') ? 1 :  0,
+          agile_methods_scrum: methods.includes('Scrum') ? 1 :  0,
+          agile_methods_kanban: methods.includes('Kanban') ? 1 :  0,
+          agile_methods_scrumban: methods.includes('ScrumBan') ? 1 :  0,
+          agile_methods_xp: methods.includes('XP') ? 1 :  0,
+          agile_methods_safe: methods.includes('Safe') ? 1 :  0,
+          agile_methods_lean: methods.includes('Lean') ? 1 :  0,
+          metrics_category_cronograma_e_progresso: categoriesSet.includes('Gestão de Tempo e Progresso') ? 1 :  0,
+          metrics_category_produto: categoriesSet.includes('Desempenho do Produto') ? 1 :  0,
+          metrics_category_processo: categoriesSet.includes('Eficiência dos Processos') ? 1 :  0,
+          metrics_category_tecnologia: categoriesSet.includes('Soluções Tecnológicas') ? 1 :  0,
+          metrics_category_cliente: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
+          metrics_category_pessoas: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
+          top_n: 8
+        }),
       });
 
       if (!response.ok) {
@@ -64,10 +62,10 @@ const MetricRecommendation = () => {
       const data = await response.json();
       console.log('Data:', data);
 
-      if (data.recommended_metrics.length === 0) {
+      if (!data) {
         setError('Nenhum perfil encontrado com similaridade suficiente. Tente fornecer mais informações.');
       } else {
-        setRecommendations(data.recommended_metrics);
+        setRecommendations(data);
       }
     } catch (err) {
       setError('Erro ao buscar as recomendações. Verifique a API e tente novamente.');
@@ -197,8 +195,9 @@ const MetricRecommendation = () => {
           {recommendations.map((rec, index) => (
             <li key={index}>
               <strong>Métrica:</strong> {rec.metric} <br />
-              <strong>Porcentagem de Afinidade:</strong> {rec.affinity_percentage}% <br />
-              <strong>Índice do Perfil Similar:</strong> {rec.similar_profile_index}
+              <strong>Porcentagem de Afinidade:</strong> {rec.affinity}% <br />
+              <strong>Descrição:</strong> {rec.description} <br />
+              <strong>Debug: Índice do Perfil Similar:</strong> {rec.similar_profile_index}
             </li>
           ))}
         </ul>
