@@ -8,7 +8,7 @@ const agileMethods = ['Scrum', 'Kanban', 'Lean', 'Safe', 'XP', 'ScrumBan'];
 const ritualsToUse = ['Reunião de Planejamento', 'Sprint Review', 'Reunião Semanal', 'Reunião Diária (daily)', 'Retrospectiva'];
 const categories = ['Gestão de Tempo e Progresso', 'Gestão de Equipes', 'Desempenho do Produto', 'Eficiência dos Processos', 'Soluções Tecnológicas',  'Satisfação e Experiência do Cliente'];
 
-const MetricRecommendation = () => {
+const FilteringRecommendation = () => {
   const [role, setRole] = useState('');
   const [experience, setExperience] = useState('');
   const [companySize, setCompanySize] = useState('');
@@ -207,4 +207,4 @@ const MetricRecommendation = () => {
   );
 };
 
-export default MetricRecommendation;
+export default FilteringRecommendation;
