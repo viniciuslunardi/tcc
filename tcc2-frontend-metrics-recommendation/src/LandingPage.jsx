@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Typography, Button, Grid } from '@mui/material';
+import { Container, Typography, Button, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
@@ -22,29 +22,39 @@ const LandingPage = () => {
         Escolha o tipo de recomendação que deseja explorar:
       </Typography>
       
-      <Grid container spacing={3} style={{ marginTop: '20px' }}>
-        <Grid item xs={12}>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleContentBased}
-          >
-            Recomendação Baseada em Conteúdo
-          </Button>
-        </Grid>
+      <Box display="flex" flexDirection="column" gap={2} mt={2}>
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          onClick={handleContentBased}
+        >
+          Recomendação Baseada em Conteúdo
+        </Button>
 
-        <Grid item xs={12}>
-          <Button
-            variant="contained"
-            color="secondary"
-            fullWidth
-            onClick={handleCollaborativeFiltering}
-          >
-            Recomendação por Filtro Colaborativo
-          </Button>
-        </Grid>
-      </Grid>
+        <Button
+          variant="contained"
+          color="secondary"
+          fullWidth
+          onClick={handleCollaborativeFiltering}
+        >
+          Recomendação por Filtro Colaborativo
+        </Button>
+      </Box>
+
+      {/* Rodapé com imagem e texto */}
+      <footer style={{ marginTop: '50px', textAlign: 'center' }}>
+        <img 
+          src="logo_ufsc.png" 
+          alt="Imagem do Trabalho" 
+          style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
+        />
+        <Typography variant="caption" display="block" gutterBottom>
+          Trabalho de Conclusão de Curso apresentado ao Curso de Graduação em Sistemas de Informação 
+          pela Universidade Federal de Santa Catarina. Aluno Vinicius Araldi Lunardi Farias, 
+          matrícula 18200653. Orientador Prof. Dr. Jean Carlo Rossa Hauck.
+        </Typography>
+      </footer>
     </Container>
   );
 };

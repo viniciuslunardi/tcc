@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { TextField, MenuItem, Autocomplete, Container, Typography, Button, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const roles = [
   'Team leader',
@@ -33,18 +33,17 @@ const experienceLevels = ['0 a 5', '6 a 9', '10 a 20', 'Mais de 20'];
 const companySizes = ['Microempresa', 'Pequena empresa', 'Média empresa', 'Grande empresa'];
 const agileMethods = ['Scrum', 'Kanban', 'Lean', 'Safe', 'XP', 'ScrumBan'];
 const ritualsToUse = ['Reunião de Planejamento', 'Sprint Review', 'Reunião Semanal', 'Reunião Diária (daily)', 'Retrospectiva'];
-const categories = ['Gestão de Tempo e Progresso', 'Gestão de Equipes', 'Desempenho do Produto', 'Eficiência dos Processos', 'Soluções Tecnológicas',  'Satisfação e Experiência do Cliente'];
 
-const FilteringRecommendation = () => {
+const ContentRecommendation = () => {
   const [role, setRole] = useState('');
   const [experience, setExperience] = useState('');
   const [companySize, setCompanySize] = useState('');
   const [methods, setMethods] = useState([]);
   const [rituals, setRituals] = useState([]);
-  const [categoriesSet, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState('');  
+  const [threshold, setThreshold] = useState(0.5);
 
 
   const handleRecommendation = async () => {
@@ -53,14 +52,14 @@ const FilteringRecommendation = () => {
     setRecommendations([]);
   
     try {
-      const response = await fetch('http://localhost:5000/recommend_metrics_collaborative', {
+      const response = await fetch('http://localhost:5000/recommend_metrics_content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          role: role,
-          years_exp: experience,
+          role: role, 
+          years_exp: experience, 
           org_size: companySize,
           use_metrics_planning: rituals.includes('Reunião de Planejamento') ? 1 :  0,
           use_metrics_review: rituals.includes('Sprint Review') ? 1 :  0,
@@ -73,13 +72,7 @@ const FilteringRecommendation = () => {
           agile_methods_xp: methods.includes('XP') ? 1 :  0,
           agile_methods_safe: methods.includes('Safe') ? 1 :  0,
           agile_methods_lean: methods.includes('Lean') ? 1 :  0,
-          metrics_category_cronograma_e_progresso: categoriesSet.includes('Gestão de Tempo e Progresso') ? 1 :  0,
-          metrics_category_produto: categoriesSet.includes('Desempenho do Produto') ? 1 :  0,
-          metrics_category_processo: categoriesSet.includes('Eficiência dos Processos') ? 1 :  0,
-          metrics_category_tecnologia: categoriesSet.includes('Soluções Tecnológicas') ? 1 :  0,
-          metrics_category_cliente: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-          metrics_category_pessoas: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-          top_n: 8
+          thrashold: 0.5,
         }),
       });
 
@@ -88,12 +81,11 @@ const FilteringRecommendation = () => {
       }
 
       const data = await response.json();
-      console.log('Data:', data);
 
-      if (!data) {
-        setError('Nenhum perfil encontrado com similaridade suficiente. Tente fornecer mais informações.');
+      if (data.metric_recommendations && data.metric_recommendations['0']) {
+        setRecommendations(data.metric_recommendations['0']);
       } else {
-        setRecommendations(data);
+        setError('Nenhuma métrica recomendada.');
       }
     } catch (err) {
       setError('Erro ao buscar as recomendações. Verifique a API e tente novamente.');
@@ -103,11 +95,9 @@ const FilteringRecommendation = () => {
     }
   };
 
-
   const navigate = useNavigate();
-
   return (
-    <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
+    <Container maxWidth="sm" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
         Recomendação de Métricas
       </Typography>
@@ -187,19 +177,6 @@ const FilteringRecommendation = () => {
         )}
       />
 
-      <Autocomplete
-        multiple
-        id="categories"
-        options={categories}
-        value={categoriesSet}
-        onChange={(event, newValue) => {
-          setCategories(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} label="Onde você acha importante aplicar métricas?" placeholder="Selecione" fullWidth margin="normal" />
-        )}
-      />
-
       {/* Botão para Obter Recomendações */}
       <Button
         variant="contained"
@@ -219,16 +196,14 @@ const FilteringRecommendation = () => {
         </Typography>
       )}
 
-      
-
-
-      {recommendations.length > 0 && (
+  {recommendations.length > 0 && (
         <TableContainer component={Paper} style={{ marginTop: '20px' }}>
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell><strong>Métrica</strong></TableCell>
                 <TableCell><strong>Afinidade</strong></TableCell>
+                <TableCell><strong>Categoria</strong></TableCell>
                 <TableCell><strong>Descrição</strong></TableCell>
               </TableRow>
             </TableHead>
@@ -236,7 +211,8 @@ const FilteringRecommendation = () => {
               {recommendations.map((rec, index) => (
                 <TableRow key={index}>
                   <TableCell>{rec.metric}</TableCell>
-                  <TableCell>{(rec.affinity).toFixed(2)} %</TableCell>
+                  <TableCell>{(rec.affinity * 100).toFixed(2)} %</TableCell>
+                  <TableCell>{rec.category}</TableCell>
                   <TableCell>{rec.description}</TableCell>
                 </TableRow>
               ))}
@@ -245,7 +221,6 @@ const FilteringRecommendation = () => {
         </TableContainer>
       )}
 
-      
       <Button 
         variant="outlined" 
         color="primary" 
@@ -255,7 +230,7 @@ const FilteringRecommendation = () => {
       >
         Voltar para a Página Inicial
       </Button>
-
+      
        {/* Rodapé com imagem e texto */}
        <footer style={{ marginTop: '50px', textAlign: 'center' }}>
         <img 
@@ -273,4 +248,4 @@ const FilteringRecommendation = () => {
   );
 };
 
-export default FilteringRecommendation;
+export default ContentRecommendation;

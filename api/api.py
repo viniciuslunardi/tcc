@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, send_from_directory
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
@@ -8,7 +9,7 @@ from flask_cors import CORS
 
 class MetricsRecommendationService:
     def __init__(self):
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, static_folder='static')
         CORS(self.app)
         self.setup_routes()
         
@@ -19,11 +20,17 @@ class MetricsRecommendationService:
         self.features = self.model_data['features']
         self.feature_weights_default = self.model_data['feature_weights']
         self.tfidf_vectorizers = self.model_data['tfidf_vectorizers']
+        self.df_metrics = pd.read_excel('extracted_metrics.xlsx', sheet_name='Extracted metrics')
+
 
     def setup_routes(self):
         # Definir rotas para as APIs
         self.app.add_url_rule('/recommend_metrics_content', 'recommend_metrics_content', self.recommend_metrics_content, methods=['POST'])
         self.app.add_url_rule('/recommend_metrics_collaborative', 'recommend_metrics_collaborative', self.recommend_metrics_collaborative, methods=['POST'])
+
+        # Rota para servir o frontend React
+        self.app.add_url_rule('/', 'serve_frontend', self.serve_frontend)
+        self.app.add_url_rule('/<path:path>', 'serve_frontend', self.serve_frontend)
 
     def process_user_input(self, user_data):
         user_df = pd.DataFrame([user_data])
@@ -67,11 +74,14 @@ class MetricsRecommendationService:
         categories = ['Cronograma e progresso', 'Produto', 'Processo', 'Tecnologia', 'Pessoas', 'Cliente']
         user_df = user_df.drop(columns=categories, errors='ignore').copy()
         
-
-        user_df.to_excel('test.xlsx')   
-
         return user_df
 
+    def serve_frontend(self, path=''):
+        if path != "" and os.path.exists(os.path.join(self.app.static_folder, path)):
+            return send_from_directory(self.app.static_folder, path)
+        else:
+            return send_from_directory(self.app.static_folder, 'index.html')
+        
     def classify_user(self, categories, category_probabilities, user_df):
         for category in categories:
             model_filename = f"modelo_{category}_ajustado.joblib"
@@ -103,6 +113,11 @@ class MetricsRecommendationService:
             metric_recommendations_with_affinity = self.recomendar_metricas_com_afinidade(
                 category_probabilities, category_to_metrics, threshold
             )
+
+             # Adicionar a descrição das métricas no retorno
+            for user_idx, recommendations in metric_recommendations_with_affinity.items():
+                for rec in recommendations:
+                    rec['description'] = self.get_metric_description(rec['metric'])
 
             response = {
                 'threshold': threshold,
@@ -181,9 +196,12 @@ class MetricsRecommendationService:
 
                 id_integer_value = similar_profiles.iloc[idx]['id_integer']
 
+                description = self.get_metric_description(metrics)
+
                 recommended_metrics.append({
                     "metric": metrics,
                     "affinity": float(affinity),
+                    "description": description,
                     "similar_profile_index": int(id_integer_value)
                 })
 
@@ -219,6 +237,13 @@ class MetricsRecommendationService:
 
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+        
+    def get_metric_description(self, metric_name):
+        """Busca a descrição da métrica no dataframe."""
+        match = self.df_metrics[self.df_metrics['Metric Name'] == metric_name]
+        if not match.empty:
+            return match.iloc[0]['Metric Description']
+        return 'Descrição não disponível'
 
     def run(self):
         self.app.run(host='0.0.0.0', port=5000)

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './LandingPage';
-//import ContentBasedRecommendation from './ContentBasedRecommendation';
+import ContentRecommendation from './ContentRecommendation';
 import FilteringRecommendation from './FilteringRecommendation';
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        {/* <Route path="/content-based" element={<ContentBasedRecommendation />} /> */}
+        <Route path="/content-based" element={<ContentRecommendation />} />
         <Route path="/collaborative-filtering" element={<FilteringRecommendation />} />
       </Routes>
     </Router>
