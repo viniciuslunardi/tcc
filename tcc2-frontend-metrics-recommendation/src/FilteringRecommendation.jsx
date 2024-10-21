@@ -109,7 +109,7 @@ const FilteringRecommendation = () => {
   return (
     <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Recomendação de Métricas
+        Recomendação de Métricas por Filtro Colaborativo
       </Typography>
 
       {/* Seleção da Função */}

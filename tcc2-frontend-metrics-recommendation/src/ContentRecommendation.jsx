@@ -99,7 +99,7 @@ const ContentRecommendation = () => {
   return (
     <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Recomendação de Métricas
+        Recomendação de Métricas utilizando um modelo de classificação e abordagem baseada em conteúdo
       </Typography>
 
       {/* Seleção da Função */}
