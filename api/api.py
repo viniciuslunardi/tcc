@@ -20,7 +20,7 @@ class MetricsRecommendationService:
         self.features = self.model_data['features']
         self.feature_weights_default = self.model_data['feature_weights']
         self.tfidf_vectorizers = self.model_data['tfidf_vectorizers']
-        self.df_metrics = pd.read_excel('extracted_metrics.xlsx', sheet_name='Extracted metrics')
+        self.df_metrics = pd.read_excel('extracted_metrics.xlsx', sheet_name='Descriptions')
 
 
     def setup_routes(self):

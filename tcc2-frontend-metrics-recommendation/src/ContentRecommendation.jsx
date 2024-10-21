@@ -97,7 +97,7 @@ const ContentRecommendation = () => {
 
   const navigate = useNavigate();
   return (
-    <Container maxWidth="sm" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
+    <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
         Recomendação de Métricas
       </Typography>
