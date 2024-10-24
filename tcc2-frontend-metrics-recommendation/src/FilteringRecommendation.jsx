@@ -81,7 +81,7 @@ const FilteringRecommendation = () => {
           metrics_category_tecnologia: categoriesSet.includes('Soluções Tecnológicas') ? 1 :  0,
           metrics_category_cliente: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
           metrics_category_pessoas: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-          top_n: topN
+          top_n: parseInt(topN)
         }),
       });
 

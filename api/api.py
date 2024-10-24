@@ -6,6 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import joblib
 from flask_cors import CORS
+import re
 
 class MetricsRecommendationService:
     def __init__(self):
@@ -176,6 +177,8 @@ class MetricsRecommendationService:
         return total_similarity
 
     # Função para recomendar métricas com base em perfis similares
+ # Função para recomendar métricas com base em perfis similares usando "matched_metrics"
+    
     def recommend_metrics_col(self, user_profile, top_n=5, feature_weights=None):
         df_with_user = self.add_user_to_dataframe(user_profile)
         user_index = len(df_with_user) - 1
@@ -189,21 +192,25 @@ class MetricsRecommendationService:
 
         recommended_metrics = []
 
-        for idx, metrics in enumerate(similar_profiles['sanitized_metrics']):
-            if metrics not in [rec['metric'] for rec in recommended_metrics]:
-                affinity = similar_affinity[idx]
-                affinity = min(affinity, 100)  # Limitar afinidade a 100
+        for idx, metrics in enumerate(similar_profiles['matched_metrics']):
+            # Verificar se 'metrics' não é NaN e é uma string válida
+            if pd.notna(metrics) and isinstance(metrics, str):
+                if metrics not in [rec['metric'] for rec in recommended_metrics]:
+                    affinity = similar_affinity[idx]
+                    affinity = min(affinity, 100)  # Limitar afinidade a 100
 
-                id_integer_value = similar_profiles.iloc[idx]['id_integer']
+                    id_integer_value = similar_profiles.iloc[idx]['id_integer']
 
-                description = self.get_metric_description(metrics)
+                    # Obter o nome e a descrição da métrica
+                    metric_name, description = self.get_metric_description(metrics, get_name_and_description=True)
 
-                recommended_metrics.append({
-                    "metric": metrics,
-                    "affinity": float(affinity),
-                    "description": description,
-                    "similar_profile_index": int(id_integer_value)
-                })
+                    if metric_name and description:  # Somente adicionar se encontrar correspondência
+                        recommended_metrics.append({
+                            "metric": metric_name,
+                            "affinity": float(affinity),
+                            "description": description,
+                            "similar_profile_index": int(id_integer_value)
+                        })
 
             if len(recommended_metrics) == top_n:
                 break
@@ -238,13 +245,17 @@ class MetricsRecommendationService:
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         
-    def get_metric_description(self, metric_name):
-        """Busca a descrição da métrica no dataframe."""
-        match = self.df_metrics[self.df_metrics['Metric Name'] == metric_name]
+    def get_metric_description(self, matched_metric, get_name_and_description=False):
+    # Buscar a métrica correspondente no dataset
+        match = self.df_metrics[self.df_metrics['Metric Name'].str.lower() == matched_metric]
+        
         if not match.empty:
+            if get_name_and_description:
+                return match.iloc[0]['Metric Name'], match.iloc[0]['Metric Description']
             return match.iloc[0]['Metric Description']
-        return 'Descrição não disponível'
-
+        
+        return None  # Retornar None se não houver correspondência
+    
     def run(self):
         self.app.run(host='0.0.0.0', port=5000)
 
