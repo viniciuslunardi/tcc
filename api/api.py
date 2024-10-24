@@ -247,7 +247,7 @@ class MetricsRecommendationService:
         
     def get_metric_description(self, matched_metric, get_name_and_description=False):
     # Buscar a métrica correspondente no dataset
-        match = self.df_metrics[self.df_metrics['Metric Name'].str.lower() == matched_metric]
+        match = self.df_metrics[self.df_metrics['Metric Name'].str.lower() == matched_metric.lower()]
         
         if not match.empty:
             if get_name_and_description:
