@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, MenuItem, Autocomplete, Container, Typography, Button, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { TextField, MenuItem, Autocomplete, Container, Typography, Button, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Slider } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const roles = [
@@ -34,6 +34,8 @@ const companySizes = ['Microempresa', 'Pequena empresa', 'Média empresa', 'Gran
 const agileMethods = ['Scrum', 'Kanban', 'Lean', 'Safe', 'XP', 'ScrumBan'];
 const ritualsToUse = ['Reunião de Planejamento', 'Sprint Review', 'Reunião Semanal', 'Reunião Diária (daily)', 'Retrospectiva'];
 
+
+
 const ContentRecommendation = () => {
   const [role, setRole] = useState('');
   const [experience, setExperience] = useState('');
@@ -43,8 +45,11 @@ const ContentRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState('');  
-  const [threshold, setThreshold] = useState(0.5);
+  const [threshold, setThreshold] = useState(0.5); // Novo estado para o threshold
 
+  const handleThresholdChange = (event, newValue) => {
+    setThreshold(newValue);
+  };
 
   const handleRecommendation = async () => {
     setLoading(true);
@@ -52,7 +57,8 @@ const ContentRecommendation = () => {
     setRecommendations([]);
   
     try {
-      const response = await fetch('http://localhost:5000/recommend_metrics_content', {
+      const currentUrl = window.location.origin;
+      const response = await fetch( currentUrl + '/recommend_metrics_content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +78,7 @@ const ContentRecommendation = () => {
           agile_methods_xp: methods.includes('XP') ? 1 :  0,
           agile_methods_safe: methods.includes('Safe') ? 1 :  0,
           agile_methods_lean: methods.includes('Lean') ? 1 :  0,
-          thrashold: 0.5,
+          threshold: parseFloat(threshold),
         }),
       });
 
@@ -175,6 +181,21 @@ const ContentRecommendation = () => {
         renderInput={(params) => (
           <TextField {...params} label="Rituais ágeis utilizados" placeholder="Selecione" fullWidth margin="normal" />
         )}
+      />
+
+      
+      {/* Slider para Threshold de Similaridade */}
+      <Typography variant="body1" style={{ marginTop: '20px' }}>
+        Threshold de Similaridade (%): {threshold} </Typography>
+      <Slider
+        value={threshold}
+        onChange={handleThresholdChange}
+        step={0.1}
+        min={0}
+        max={1}
+        valueLabelDisplay="auto"
+        marks={[{ value: 0, label: '0' }, { value: 1, label: '1' }]}
+        style={{ marginBottom: '20px' }}
       />
 
       {/* Botão para Obter Recomendações */}

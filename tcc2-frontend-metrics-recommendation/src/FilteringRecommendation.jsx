@@ -45,6 +45,7 @@ const FilteringRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState('');
+  const [topN, setTopN] = useState(5); // Novo estado para top_n
 
 
   const handleRecommendation = async () => {
@@ -53,7 +54,8 @@ const FilteringRecommendation = () => {
     setRecommendations([]);
   
     try {
-      const response = await fetch('http://localhost:5000/recommend_metrics_collaborative', {
+      const currentUrl = window.location.origin;
+      const response = await fetch(currentUrl + '/recommend_metrics_collaborative', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +81,7 @@ const FilteringRecommendation = () => {
           metrics_category_tecnologia: categoriesSet.includes('Soluções Tecnológicas') ? 1 :  0,
           metrics_category_cliente: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
           metrics_category_pessoas: categoriesSet.includes('Satisfação e Experiência do Cliente') ? 1 :  0,
-          top_n: 8
+          top_n: topN
         }),
       });
 
@@ -198,6 +200,17 @@ const FilteringRecommendation = () => {
         renderInput={(params) => (
           <TextField {...params} label="Onde você acha importante aplicar métricas?" placeholder="Selecione" fullWidth margin="normal" />
         )}
+      />
+
+     {/* Campo para definir o top_n */}
+     <TextField
+        label="Número Máximo de Recomendações"
+        type="number"
+        value={topN}
+        onChange={(e) => setTopN(e.target.value)}
+        InputProps={{ inputProps: { min: 1 } }}
+        fullWidth
+        margin="normal"
       />
 
       {/* Botão para Obter Recomendações */}
