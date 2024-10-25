@@ -30,7 +30,7 @@ const roles = [
   'CEO',
 ];
 const experienceLevels = ['0 a 5', '6 a 9', '10 a 20', 'Mais de 20'];
-const companySizes = ['Microempresa', 'Pequena empresa', 'Média empresa', 'Grande empresa'];
+const companySizes = ['Microempresa (< 10 empregados)', 'Pequena empresa (10-99 empregados)', 'Média empresa (100-500 empregados)', 'Grande empresa (>500 empregados)'];
 const agileMethods = ['Scrum', 'Kanban', 'Lean', 'Safe', 'XP', 'ScrumBan'];
 const ritualsToUse = ['Reunião de Planejamento', 'Sprint Review', 'Reunião Semanal', 'Reunião Diária (daily)', 'Retrospectiva'];
 
@@ -66,7 +66,7 @@ const ContentRecommendation = () => {
         body: JSON.stringify({
           role: role, 
           years_exp: experience, 
-          org_size: companySize,
+          org_size: companySize.replace(/\s*\(.*\)/, ''),
           use_metrics_planning: rituals.includes('Reunião de Planejamento') ? 1 :  0,
           use_metrics_review: rituals.includes('Sprint Review') ? 1 :  0,
           use_metrics_weekly: rituals.includes('Reunião Semanal') ? 1 :  0,
