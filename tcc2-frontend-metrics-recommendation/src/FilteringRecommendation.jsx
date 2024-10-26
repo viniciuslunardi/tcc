@@ -45,7 +45,8 @@ const FilteringRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState('');
-  const [topN, setTopN] = useState(5); // Novo estado para top_n
+  const [topN, setTopN] = useState(5); 
+  const [isApiCalled, setIsApiCalled] = useState(false);
 
 
   const handleRecommendation = async () => {
@@ -53,6 +54,12 @@ const FilteringRecommendation = () => {
     setError('');
     setRecommendations([]);
   
+    if (!role || !experience || !companySize || methods.length === 0 || rituals.length === 0 || categoriesSet.length === 0) {
+      setError('Preencha todos os campos obrigatórios.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const currentUrl = window.location.origin;
       const response = await fetch(currentUrl + '/recommend_metrics_collaborative', {
@@ -102,6 +109,7 @@ const FilteringRecommendation = () => {
       console.error(err);
     } finally {
       setLoading(false);
+      setIsApiCalled(true);
     }
   };
 
@@ -111,7 +119,7 @@ const FilteringRecommendation = () => {
   return (
     <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Recomendação de Métricas por Filtro Colaborativo
+        Recomendação de Métricas Ágeis - Filtro Colaborativo
       </Typography>
 
       {/* Seleção da Função */}
@@ -235,28 +243,36 @@ const FilteringRecommendation = () => {
       
 
 
-      {recommendations.length > 0 && (
-        <TableContainer component={Paper} style={{ marginTop: '20px' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>Métrica</strong></TableCell>
-                <TableCell><strong>Afinidade</strong></TableCell>
-                <TableCell><strong>Descrição</strong></TableCell>
+<>
+    {recommendations.length > 0 ? (
+      <TableContainer component={Paper} style={{ marginTop: '20px' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Métrica</strong></TableCell>
+              <TableCell><strong>Afinidade</strong></TableCell>
+              <TableCell><strong>Descrição</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {recommendations.map((rec, index) => (
+              <TableRow key={index}>
+                <TableCell>{rec.metric}</TableCell>
+                <TableCell>{(rec.affinity).toFixed(2)} %</TableCell>
+                <TableCell>{rec.description}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {recommendations.map((rec, index) => (
-                <TableRow key={index}>
-                  <TableCell>{rec.metric}</TableCell>
-                  <TableCell>{(rec.affinity).toFixed(2)} %</TableCell>
-                  <TableCell>{rec.description}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    ) : (
+      isApiCalled && (
+        <Typography variant="h6" style={{ marginTop: '20px', textAlign: 'center' }}>
+          Nenhuma métrica recomendada foi encontrada. Ajuste os parâmetros e tente novamente.
+        </Typography>
+      )
+    )}
+  </>
 
       
       <Button 
@@ -271,9 +287,14 @@ const FilteringRecommendation = () => {
 
        {/* Rodapé com imagem e texto */}
        <footer style={{ marginTop: '50px', textAlign: 'center' }}>
-        <img 
+       <img 
           src="logo_ufsc.png" 
-          alt="Imagem do Trabalho" 
+          alt="Imagem do tcc" 
+          style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
+        />
+          <img 
+          src="logo_ine.png" 
+          alt="Imagem do ine" 
           style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
         />
         <Typography variant="caption" display="block" gutterBottom>

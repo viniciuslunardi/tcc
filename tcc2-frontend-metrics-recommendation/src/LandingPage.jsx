@@ -29,16 +29,16 @@ const LandingPage = () => {
           fullWidth
           onClick={handleContentBased}
         >
-          Recomendação Baseada em Conteúdo
+          Modelo Baseado em Conteúdo
         </Button>
 
         <Button
           variant="contained"
-          color="secondary"
+          color="primary"
           fullWidth
           onClick={handleCollaborativeFiltering}
         >
-          Recomendação por Filtro Colaborativo
+          Modelo de Filtragem Colaborativa
         </Button>
       </Box>
 
@@ -46,7 +46,12 @@ const LandingPage = () => {
       <footer style={{ marginTop: '50px', textAlign: 'center' }}>
         <img 
           src="logo_ufsc.png" 
-          alt="Imagem do Trabalho" 
+          alt="Imagem do tcc" 
+          style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
+        />
+          <img 
+          src="logo_ine.png" 
+          alt="Imagem do ine" 
           style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
         />
         <Typography variant="caption" display="block" gutterBottom>

@@ -45,7 +45,9 @@ const ContentRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState('');  
-  const [threshold, setThreshold] = useState(0.5); // Novo estado para o threshold
+  const [threshold, setThreshold] = useState(50); // Novo estado para o threshold
+  const [isApiCalled, setIsApiCalled] = useState(false);
+
 
   const handleThresholdChange = (event, newValue) => {
     setThreshold(newValue);
@@ -55,7 +57,13 @@ const ContentRecommendation = () => {
     setLoading(true);
     setError('');
     setRecommendations([]);
-  
+    
+    if (!role || !experience || !companySize || methods.length === 0 || rituals.length === 0) { 
+      setError('Por favor, preencha todos os campos.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       const currentUrl = window.location.origin;
       const response = await fetch( currentUrl + '/recommend_metrics_content', {
@@ -78,7 +86,7 @@ const ContentRecommendation = () => {
           agile_methods_xp: methods.includes('XP') ? 1 :  0,
           agile_methods_safe: methods.includes('Safe') ? 1 :  0,
           agile_methods_lean: methods.includes('Lean') ? 1 :  0,
-          threshold: parseFloat(threshold),
+          threshold: parseFloat(threshold * 0.01),
         }),
       });
 
@@ -98,6 +106,7 @@ const ContentRecommendation = () => {
       console.error(err);
     } finally {
       setLoading(false);
+      setIsApiCalled(true);
     }
   };
 
@@ -105,7 +114,7 @@ const ContentRecommendation = () => {
   return (
     <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Recomendação de Métricas utilizando um modelo de classificação e abordagem baseada em conteúdo
+        Recomendação de Métricas Ágeis - Baseada em Conteúdo
       </Typography>
 
       {/* Seleção da Função */}
@@ -186,15 +195,15 @@ const ContentRecommendation = () => {
       
       {/* Slider para Threshold de Similaridade */}
       <Typography variant="body1" style={{ marginTop: '20px' }}>
-        Threshold de Similaridade (%): {threshold} </Typography>
+         Similaridade (%): {threshold} </Typography>
       <Slider
         value={threshold}
         onChange={handleThresholdChange}
-        step={0.1}
+        step={10}
         min={0}
-        max={1}
+        max={100}
         valueLabelDisplay="auto"
-        marks={[{ value: 0, label: '0' }, { value: 1, label: '1' }]}
+        marks={[{ value: 0, label: '0%' }, { value: 100, label: '100%' }]}
         style={{ marginBottom: '20px' }}
       />
 
@@ -217,30 +226,38 @@ const ContentRecommendation = () => {
         </Typography>
       )}
 
-  {recommendations.length > 0 && (
-        <TableContainer component={Paper} style={{ marginTop: '20px' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>Métrica</strong></TableCell>
-                <TableCell><strong>Afinidade</strong></TableCell>
-                <TableCell><strong>Categoria</strong></TableCell>
-                <TableCell><strong>Descrição</strong></TableCell>
+<>
+    {recommendations.length > 0 ? (
+      <TableContainer component={Paper} style={{ marginTop: '20px' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Métrica</strong></TableCell>
+              <TableCell><strong>Afinidade</strong></TableCell>
+              <TableCell><strong>Categoria</strong></TableCell>
+              <TableCell><strong>Descrição</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {recommendations.map((rec, index) => (
+              <TableRow key={index}>
+                <TableCell>{rec.metric}</TableCell>
+                <TableCell>{(rec.affinity * 100).toFixed(2)} %</TableCell>
+                <TableCell>{rec.category}</TableCell>
+                <TableCell>{rec.description}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {recommendations.map((rec, index) => (
-                <TableRow key={index}>
-                  <TableCell>{rec.metric}</TableCell>
-                  <TableCell>{(rec.affinity * 100).toFixed(2)} %</TableCell>
-                  <TableCell>{rec.category}</TableCell>
-                  <TableCell>{rec.description}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    ) : (
+      isApiCalled && (
+        <Typography variant="h6" style={{ marginTop: '20px', textAlign: 'center' }}>
+          Nenhuma métrica recomendada foi encontrada. Ajuste a porcentagem de similaridade e os parâmetros informados e tente novamente.
+        </Typography>
+      )
+    )}
+  </>
 
       <Button 
         variant="outlined" 
@@ -254,9 +271,14 @@ const ContentRecommendation = () => {
       
        {/* Rodapé com imagem e texto */}
        <footer style={{ marginTop: '50px', textAlign: 'center' }}>
-        <img 
+       <img 
           src="logo_ufsc.png" 
-          alt="Imagem do Trabalho" 
+          alt="Imagem do tcc" 
+          style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
+        />
+          <img 
+          src="logo_ine.png" 
+          alt="Imagem do ine" 
           style={{ width: '100%', maxWidth: '50px', marginBottom: '10px' }} 
         />
         <Typography variant="caption" display="block" gutterBottom>
