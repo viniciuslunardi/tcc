@@ -9,7 +9,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/content-based" element={<ContentRecommendation />} />
+        <Route path="/multilabel" element={<ContentRecommendation />} />
         <Route path="/collaborative-filtering" element={<FilteringRecommendation />} />
       </Routes>
     </Router>

@@ -6,7 +6,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const handleContentBased = () => {
-    navigate('/content-based');
+    navigate('/multilabel');
   };
 
   const handleCollaborativeFiltering = () => {

@@ -16,6 +16,8 @@ logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
 class MetricsRecommendationService:
     def __init__(self):
         self.app = Flask(__name__, static_folder='static')
+        self.app.config['JSON_AS_ASCII'] = False
+
         CORS(self.app)
         self.setup_routes()
         logging.info("Iniciando a API de recomendação de métricas.")
@@ -110,14 +112,14 @@ class MetricsRecommendationService:
             )
          
             for user_idx, recommendations in metric_recommendations_with_affinity.items():
-                print(recommendations)
                 for rec in recommendations:
                     if isinstance(rec['metric'], str):
                         rec['description'] = self.get_metric_description(rec['metric'])
                     else:
                         #remover a metrica das recomendações
                         recommendations.remove(rec)
-
+            
+            print()
             response = {
                 'threshold': threshold,
                 'metric_recommendations': metric_recommendations_with_affinity
@@ -253,6 +255,7 @@ class MetricsRecommendationService:
             # Obter as métricas recomendadas
             recommendations = self.recommend_metrics_col(user_profile, top_n=data.get('top_n', 5), feature_weights=feature_weights)
 
+            print(recommendations)
             return jsonify(recommendations), 200
 
         except Exception as e:
