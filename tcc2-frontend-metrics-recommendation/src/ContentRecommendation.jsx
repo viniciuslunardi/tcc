@@ -6,7 +6,7 @@ const roles = [
   'Team leader',
   'Product manager',
   'Scrum master',
-  'Engineering Manager',
+  'cd ',
   'Project Manager',
   'Product owner',
   'Desenvolvedor(a)',
@@ -66,7 +66,7 @@ const ContentRecommendation = () => {
     
     try {
       const currentUrl = window.location.origin;
-      const response = await fetch( currentUrl + '/recommend_metrics_content', {
+      const response = await fetch( currentUrl + '/recommend_metrics_multilabel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ const ContentRecommendation = () => {
   return (
     <Container maxWidth="md" style={{ marginTop: '50px', padding: '20px', backgroundColor: '#fff', borderRadius: '10px' }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Recomendação de Métricas Ágeis - Baseada em Conteúdo
+        Recomendação de Métricas Ágeis - Classificação Multi-Label
       </Typography>
 
       {/* Seleção da Função */}

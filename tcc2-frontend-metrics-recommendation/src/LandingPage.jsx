@@ -29,7 +29,7 @@ const LandingPage = () => {
           fullWidth
           onClick={handleContentBased}
         >
-          Modelo Baseado em Conteúdo
+          Modelo de Classificação MultiLabel
         </Button>
 
         <Button

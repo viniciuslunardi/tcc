@@ -6,14 +6,20 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import joblib
 from flask_cors import CORS
-import re
+import logging
+
+# Configura o logging
+logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                    format='%(name)s - %(levelname)s - %(message)s')
+
 
 class MetricsRecommendationService:
     def __init__(self):
         self.app = Flask(__name__, static_folder='static')
         CORS(self.app)
         self.setup_routes()
-        
+        logging.info("Iniciando a API de recomendação de métricas.")
+
         # Carregar o modelo de filtragem colaborativa
         self.model_data = joblib.load('collaborative_filtering.joblib')
         self.df = self.model_data['df']
@@ -23,59 +29,22 @@ class MetricsRecommendationService:
         self.tfidf_vectorizers = self.model_data['tfidf_vectorizers']
         self.df_metrics = pd.read_excel('extracted_metrics.xlsx', sheet_name='Descriptions')
 
+        self.metrics_data = pd.read_excel('extracted_metrics.xlsx', sheet_name="Extracted metrics")
+        self.metrics_data = self.metrics_data.copy()
+        self.category_to_metrics = self.metrics_data.groupby('Translation')['Metric Name'].apply(list).to_dict()
+        self.model_columns = joblib.load('model_columns.joblib')
+
+
 
     def setup_routes(self):
         # Definir rotas para as APIs
-        self.app.add_url_rule('/recommend_metrics_content', 'recommend_metrics_content', self.recommend_metrics_content, methods=['POST'])
+        self.app.add_url_rule('/recommend_metrics_multilabel', 'recommend_metrics_multilabel', self.recommend_metrics_multilabel, methods=['POST'])
         self.app.add_url_rule('/recommend_metrics_collaborative', 'recommend_metrics_collaborative', self.recommend_metrics_collaborative, methods=['POST'])
 
         # Rota para servir o frontend React
         self.app.add_url_rule('/', 'serve_frontend', self.serve_frontend)
         self.app.add_url_rule('/<path:path>', 'serve_frontend', self.serve_frontend)
 
-    def process_user_input(self, user_data):
-        user_df = pd.DataFrame([user_data])
-        column_structure = joblib.load('column_structure.joblib')
-
-        # Adicionar as colunas faltantes no user_df e preencher com 0
-        missing_cols = set(column_structure) - set(user_df.columns)
-        for col in missing_cols:
-            user_df[col] = 0
-
-        years_exp_col = f"years_exp_{user_data.get('years_exp', '')}"
-        org_size_col = f"org_size_{user_data.get('org_size', '')}"
-        role_col = f"role_{user_data.get('role', '')}"
-
-        if years_exp_col in user_df.columns:
-            user_df[years_exp_col] = 1
-
-        if org_size_col in user_df.columns:
-            user_df[org_size_col] = 1
-
-        if role_col in user_df.columns:
-            user_df[role_col] = 1
-
-        # Mapear os métodos ágeis para o formato esperado
-        agile_methods_map = {
-            "agile_methods_scrum": "Scrum",
-            "agile_methods_kanban": "Kanban",
-            "agile_methods_lean": "Lean",
-            "agile_methods_xp": "XP",
-            "agile_methods_safe": "Safe",
-            "agile_methods_scrumban": "ScrumBan"
-        }
-
-        for api_key, model_col in agile_methods_map.items():
-            if api_key in user_data and model_col in user_df.columns:
-                user_df[model_col] = user_data[api_key]
-
-        # Reordenar as colunas para garantir a mesma ordem do treino
-        user_df = user_df[column_structure].copy()
-
-        categories = ['Cronograma e progresso', 'Produto', 'Processo', 'Tecnologia', 'Pessoas', 'Cliente']
-        user_df = user_df.drop(columns=categories, errors='ignore').copy()
-        
-        return user_df
 
     def serve_frontend(self, path=''):
         if path != "" and os.path.exists(os.path.join(self.app.static_folder, path)):
@@ -84,16 +53,43 @@ class MetricsRecommendationService:
             return send_from_directory(self.app.static_folder, 'index.html')
         
     def classify_user(self, categories, category_probabilities, user_df):
+        logging.info(f"Classificando usuário com base nas categorias. {categories}")
+
         for category in categories:
-            model_filename = f"modelo_{category}_ajustado.joblib"
-            rf_binary = joblib.load(model_filename)
+            model_filename = f"model_{category}.joblib"
+            model = joblib.load(model_filename)
+            probabilities = model.predict_proba(user_df)[:, 1]
 
-            user_affinities = rf_binary.predict_proba(user_df)[:, 1]
-
-            for user_idx, affinity in enumerate(user_affinities):
+            for user_idx, affinity in enumerate(probabilities):
                 category_probabilities[user_idx][category] = affinity
+            logging.debug(f"Probabilidades para {category}: {probabilities}")
+            
 
-    def recommend_metrics_content(self):
+    def process_user_input(self, user_data):
+        # Converter dados do usuário em DataFrame
+        user_df = pd.DataFrame([user_data])
+        logging.debug(f"Processando dados de entrada do usuário: {user_data}")
+        # Aplicar pd.get_dummies às variáveis categóricas
+        user_df = pd.get_dummies(user_df)
+
+        # Adicionar colunas faltantes com valor 0 e remover colunas extras
+        for col in self.model_columns:
+            if col not in user_df.columns:
+                user_df[col] = 0
+        user_df = user_df[self.model_columns]
+
+        category_cols = [
+        'metrics_category_cronograma_e_progresso', 'metrics_category_produto',
+        'metrics_category_processo', 'metrics_category_tecnologia',
+        'metrics_category_pessoas', 'metrics_category_cliente'
+        ]
+        user_df.drop(columns=category_cols, errors='ignore', inplace=True)
+        
+        logging.debug("Dados de entrada processados com sucesso.")
+
+        return user_df
+
+    def recommend_metrics_multilabel(self):
         try:
             threshold = request.json.get('threshold', 0.5)
 
@@ -101,24 +97,26 @@ class MetricsRecommendationService:
             user_data = request.json
             user_df = self.process_user_input(user_data)
 
+            categories = ['metrics_category_cronograma_e_progresso', 'metrics_category_produto',
+              'metrics_category_processo', 'metrics_category_tecnologia',
+              'metrics_category_pessoas', 'metrics_category_cliente']
+            
             # Inicializar as variáveis para armazenar as probabilidades de afinidade
             category_probabilities = {user_idx: {} for user_idx in range(len(user_df))}
-            metrics_data = pd.read_excel('extracted_metrics.xlsx', sheet_name="Extracted metrics")
 
-            metrics_data = metrics_data.copy()
-            category_to_metrics = metrics_data.groupby('Translation')['Metric Name'].apply(list).to_dict()
-
-            categories = ['Cronograma e progresso', 'Produto', 'Processo', 'Tecnologia', 'Pessoas', 'Cliente']
             self.classify_user(categories, category_probabilities, user_df)
-
             metric_recommendations_with_affinity = self.recomendar_metricas_com_afinidade(
-                category_probabilities, category_to_metrics, threshold
+                category_probabilities, self.category_to_metrics, threshold
             )
-
-             # Adicionar a descrição das métricas no retorno
+         
             for user_idx, recommendations in metric_recommendations_with_affinity.items():
+                print(recommendations)
                 for rec in recommendations:
-                    rec['description'] = self.get_metric_description(rec['metric'])
+                    if isinstance(rec['metric'], str):
+                        rec['description'] = self.get_metric_description(rec['metric'])
+                    else:
+                        #remover a metrica das recomendações
+                        recommendations.remove(rec)
 
             response = {
                 'threshold': threshold,
@@ -130,21 +128,36 @@ class MetricsRecommendationService:
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+  
     def recomendar_metricas_com_afinidade(self, category_probabilities, category_to_metrics, threshold):
+        logging.info("Recomendando métricas com base nas afinidades calculadas.")
+        category_map = {
+            'metrics_category_cronograma_e_progresso': 'Cronograma e progresso',
+            'metrics_category_produto': 'Produto',
+            'metrics_category_processo': 'Processo',
+            'metrics_category_tecnologia': 'Tecnologia',
+            'metrics_category_pessoas': 'Pessoas',
+            'metrics_category_cliente': 'Cliente'
+        }
+
         recommendations = {}
-
-        for user_idx, category_affinities in category_probabilities.items():
+        for user_idx, probs in category_probabilities.items():
             user_recommendations = []
-            for categoria, afinidade in category_affinities.items():
-                if categoria in category_to_metrics and afinidade >= threshold:
-                    for metrica in category_to_metrics[categoria]:
-                        if pd.notna(metrica):
-                            user_recommendations.append({'metric': metrica, 'affinity': afinidade, 'category': categoria})
+            for category, affinity in probs.items():
+                category = category_map.get(category) 
 
-            user_recommendations.sort(key=lambda x: x['affinity'], reverse=True)
+                if affinity >= threshold:
+                    for metric in category_to_metrics.get(category, []):
+                        if isinstance(metric, str):
+                            user_recommendations.append({
+                                'metric': metric,
+                                'affinity': affinity,
+                                'category': category
+                            })
             recommendations[user_idx] = user_recommendations
-
+            logging.debug(f"Recomendações para usuário {user_idx}: {user_recommendations}")
         return recommendations
+
 
         # Função para adicionar o perfil do usuário ao dataframe existente
     def add_user_to_dataframe(self, user_profile):
@@ -257,7 +270,7 @@ class MetricsRecommendationService:
         return None  # Retornar None se não houver correspondência
     
     def run(self):
-        self.app.run(host='0.0.0.0', port=5000)
+        self.app.run(host='0.0.0.0', port=5000, debug=True)
 
 if __name__ == '__main__':
     service = MetricsRecommendationService()
