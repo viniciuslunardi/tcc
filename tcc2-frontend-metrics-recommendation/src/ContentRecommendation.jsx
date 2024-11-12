@@ -66,7 +66,7 @@ const ContentRecommendation = () => {
     
     try {
       const currentUrl = window.location.origin;
-      const response = await fetch( urrentUrl + '/recommend_metrics_multilabel', {
+      const response = await fetch( currentUrl + '/recommend_metrics_multilabel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
