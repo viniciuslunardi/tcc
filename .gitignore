@@ -128,3 +128,10 @@ myenv/
 .vscode/
 
 credentials.json
+
+node_modules/
+node_modules/*
+
+tcc_env/
+
+tcc_env/*
